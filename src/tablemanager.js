@@ -4,13 +4,13 @@
  * http://alex-d.github.com/Trumbowyg
  * ===========================================================
  * Author : Timon Orawski, Senior Developer at Edsby
- *          Twitter : @timonorawski, @Edsby
- *          Website : www.edsby.com
+ *		  Twitter : @timonorawski, @Edsby
+ *		  Website : www.edsby.com
  */
 
 (function ($) {
-    'use strict';
-    var apply = function(def, node, key, value) {
+	'use strict';
+	var apply = function(def, node, key, value) {
 			if (def.e.type == "attr") {
 				node.attr(key, value);
 			} else if (def.e.type == "css") {
@@ -33,18 +33,21 @@
 			for (var i =0 ; i < rows.length; i++) {
 				cellMap.push([]);
 			}
-            var tcell = false;
+			var tcell = false;
 			for (var r = 0; r < table[0].rows.length; r++) {
+				var colidx = 0;
 				for (var c = 0; c < table[0].rows[r].cells.length; c++) {
 					var cellid = {
-                            "row": r,
-                            "column": c,
-                            "colspan": table[0].rows[r].cells[c].colSpan,
-                            "rowspan": table[0].rows[r].cells[c].rowSpan,
-                            "cell": table[0].rows[r].cells[c]
-                        },
+							"row": r,
+							"column": c,
+							"truecolumn": colidx,
+							"colspan": table[0].rows[r].cells[c].colSpan,
+							"rowspan": table[0].rows[r].cells[c].rowSpan,
+							"cell": table[0].rows[r].cells[c]
+						},
 						cellidx = c;
-						tcell = table[0].rows[r].cells[c];
+					tcell = table[0].rows[r].cells[c];
+					colidx = colidx + cellid.colspan;
 					while (cellMap[r][cellidx]) {
 						cellidx = cellidx + 1;
 					}
@@ -57,11 +60,20 @@
 			}
 			return cellMap;
 		},
+		replaceNodeWithHTML = function(trumbowyg, replaceNode, html) {
+			var range = trumbowyg.doc.createRange(),
+				documentSelection = trumbowyg.doc.getSelection();
+			documentSelection.removeAllRanges();
+			range.selectNode(replaceNode[0]);
+			documentSelection.addRange(range);
+			trumbowyg.execCmd('insertHTML', html);
+			// TODO: try to restore selection
+		},
 		showDialog = function(conf) {
 			fetchInitialValues(conf.node, conf.fields);
 			for (var i in conf.fields) {
 				if (!conf.fields[i].label) {
-				    conf.fields[i].label = i.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+					conf.fields[i].label = i.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 				}
 			}
 			var saved = JSON.parse(JSON.stringify(conf.fields));
@@ -80,22 +92,22 @@
 							apply(conf.fields[i], conf.node, i, val[i]);
 						}
 					}
-				    var range = conf.trumbowyg.doc.createRange(),
-					    documentSelection = conf.trumbowyg.doc.getSelection();
+					var range = conf.trumbowyg.doc.createRange(),
+						documentSelection = conf.trumbowyg.doc.getSelection();
 					documentSelection.removeAllRanges();
-				    range.selectNode(conf.replacenode[0]);
-				    documentSelection.addRange(range);
+					range.selectNode(conf.replacenode[0]);
+					documentSelection.addRange(range);
 					conf.replacenode.replaceWith(tmpNode);
 					conf.trumbowyg.execCmd('insertHTML', conf.replacenode[0].outerHTML);
 					return true;
 				}
 			);
 		};
-    $.extend(true, $.trumbowyg, {
-        langs: {
-            en: {
-                insertTable: 'Insert Table',
-                editTable: 'Format Table',
+	$.extend(true, $.trumbowyg, {
+		langs: {
+			en: {
+				insertTable: 'Insert Table',
+				editTable: 'Format Table',
 				formatCell: 'Format Cell',
 				formatRow: 'Format Row',
 				insertLink: "Edit Link",
@@ -110,49 +122,49 @@
 				deleteColumn: "Delete Column",
 				mergeDown: "Merge Down",
 				mergeRight: "Merge Right"
-            }
-        },
-        plugins: {
-            tablemanager: {
-                init: function (trumbowyg) {
-                    trumbowyg.addBtnDef('insertTable', {
-                        ico: "table",
-                        fn: function () {
-                            trumbowyg.saveRange();
-                            trumbowyg.openModalInsert(
-                                // Title
-                                trumbowyg.lang.insertTable,
-                                // Fields
-                                {
-                                    rows: {
-                                        type: 'number',
-                                        required: true
-                                    },
-                                    columns: {
-                                        type: 'number',
-                                        required: true
-                                    }
-                                },
-                                function (v) { // v is value
-                                    /* create basic table */
+			}
+		},
+		plugins: {
+			tablemanager: {
+				init: function (trumbowyg) {
+					trumbowyg.addBtnDef('insertTable', {
+						ico: "table",
+						fn: function () {
+							trumbowyg.saveRange();
+							trumbowyg.openModalInsert(
+								// Title
+								trumbowyg.lang.insertTable,
+								// Fields
+								{
+									rows: {
+										type: 'number',
+										required: true
+									},
+									columns: {
+										type: 'number',
+										required: true
+									}
+								},
+								function (v) { // v is value
+									/* create basic table */
 									if (v.rows > 100 || v.columns > 100 || v.rows <= 0 || v.columns <= 0) {
 										return false;
 									}
-                                    var table = ['<table width="500px" style="background-color: white;"></table>'];
-                                    for (var i = 0; i < v.rows; i += 1) {
-                                        table.push("<tr>");
-                                        for (var j = 0; j < v.columns; j += 1) {
-                                            table.push('<td>&nbsp;</td>');
-                                        }
-                                        table.push("</tr>");
-                                    }
-                                    /* you must use insertHTML to preserve undo/redo */
+									var table = ['<table width="500px" style="background-color: white;"></table>'];
+									for (var i = 0; i < v.rows; i += 1) {
+										table.push("<tr>");
+										for (var j = 0; j < v.columns; j += 1) {
+											table.push('<td>&nbsp;</td>');
+										}
+										table.push("</tr>");
+									}
+									/* you must use insertHTML to preserve undo/redo */
 									trumbowyg.execCmd('insertHTML', table.join(""));
-                                    return true;
-                                });
-                        }
-                    });
-                    trumbowyg.addBtnDef('formatCell', {
+									return true;
+								});
+						}
+					});
+					trumbowyg.addBtnDef('formatCell', {
 						fn: function () {
 							trumbowyg.saveRange();
 							var range = trumbowyg.range,
@@ -227,9 +239,13 @@
 								table = startEl.closest('table'),
 								rows = table.find('tr');
 							var index = cell[0].cellIndex;
+							var savedTable = table.clone();
 							for (var i = 0; i < table[0].rows.length; i++) {
 								table[0].rows[i].insertCell(index);
 							}
+							var html = table[0].outerHTML;
+							table.html(savedTable.html());
+							replaceNodeWithHTML(trumbowyg, table, html);
 							trumbowyg.syncCode();
 						}
 					});
@@ -243,9 +259,14 @@
 								table = startEl.closest('table'),
 								rows = table.find('tr');
 							var index = cell[0].cellIndex;
+							var savedTable = table.clone();
+
 							for (var i = 0; i < table[0].rows.length; i++) {
 								table[0].rows[i].deleteCell(index);
 							}
+							var html = table[0].outerHTML;
+							table.html(savedTable.html());
+							replaceNodeWithHTML(trumbowyg, table, html);
 							trumbowyg.syncCode();
 						}
 					});
@@ -261,25 +282,29 @@
 							var index = cell[0].cellIndex;
 							var cellMap = getCellMap(table, rows);
 							var rowindex = row[0].rowIndex;
-                            var rowMap = cellMap[rowindex];
-                            if (cell[0].cellIndex < rowMap.length - 1) {
-                                var theCell = rowMap[cell[0].cellIndex];
-                                var mergeCell = rowMap[cell[0].cellIndex + theCell.colspan];
-                                if (mergeCell.row != theCell.row || mergeCell.row == theCell.row && mergeCell.rowspan != theCell.rowspan) {
-                                    alert("Cannot merge cells across merges.")
-                                } else {
-                                    var newcolspan = theCell.colspan + mergeCell.colspan;
-                                    // can merge
-                                    row[0].deleteCell(index + 1);
-                                    cell.attr('colspan', newcolspan);
-                                    trumbowyg.syncCode();
-                                }
-                            } else {
-                                alert("No Cell to merge right to");
-                            }
+							var rowMap = cellMap[rowindex];
+							if (cell[0].cellIndex < rowMap.length - 1) {
+								var theCell = rowMap[cell[0].cellIndex];
+								var mergeCell = rowMap[cell[0].cellIndex + theCell.colspan];
+								if (mergeCell.row != theCell.row || mergeCell.row == theCell.row && mergeCell.rowspan != theCell.rowspan) {
+									alert("Cannot merge cells across merges.")
+								} else {
+									var newcolspan = theCell.colspan + mergeCell.colspan;
+									var savedTable = table.clone();
+									// can merge
+									row[0].deleteCell(index + 1);
+									cell.attr('colspan', newcolspan);
+									var html = table[0].outerHTML;
+									table.html(savedTable[0].html);
+									replaceNodeWithHTML(trumbowyg, table, html);
+									trumbowyg.syncCode();
+								}
+							} else {
+								alert("No Cell to merge right to");
+							}
 						}
 					});
-                    trumbowyg.addBtnDef('formatRow', {
+					trumbowyg.addBtnDef('formatRow', {
 						fn: function () {
 							trumbowyg.saveRange();
 							var range = trumbowyg.range,
@@ -324,7 +349,28 @@
 								table = startEl.closest('table'),
 								rows = table.find('tr');
 							range.selectNode(row[0]);
-							trumbowyg.range.insertNode(row.clone()[0]);
+							var cellMap = getCellMap(table, rows);
+							var savedTable = table.clone();
+							var newRow = row.clone()[0];
+							var insertedRow = table[0].insertRow(row[0].rowIndex+cell[0].rowSpan);
+							var mapRow = cellMap[row[0].rowIndex];
+							for (var cid = 0; cid < mapRow.length; cid++) {
+								var cl = mapRow[cid];
+								if (cl.truecolumn == cid) {
+									if (cl.rowspan > 1) {
+										cl.cell.rowSpan = cl.cell.rowSpan + 1;
+									} else {
+										var c = insertedRow.insertCell(insertedRow.cells.length);
+										c.innerHTML = "&nbsp;";
+										if (cl.colspan > 1) {
+											c.colSpan = cl.colspan;
+										}
+									}
+								}
+							}
+							var html = table[0].outerHTML;
+							table.html(savedTable.html());
+							replaceNodeWithHTML(trumbowyg, table, html);
 							trumbowyg.syncCode();
 						}
 					});
@@ -337,7 +383,12 @@
 								row = startEl.closest('tr'),
 								table = startEl.closest('table'),
 								rows = table.find('tr');
+
+							var savedTable = table.clone();
 							table[0].deleteRow(row[0].rowIndex)
+							var html = table[0].outerHTML;
+							table.html(savedTable.html());
+							replaceNodeWithHTML(trumbowyg, table, html);
 							trumbowyg.syncCode();
 						}
 					});
@@ -355,24 +406,28 @@
 							var cellMap = getCellMap(table, rows);
 							var mapRow = cellMap[row[0].rowIndex];
 							if (row[0].rowIndex+cell[0].rowSpan-1 < cellMap.length) {
-                                var theCell = mapRow[cell[0].cellIndex];
+								var theCell = mapRow[cell[0].cellIndex];
 								var mergeRow = cellMap[row[0].rowIndex + theCell.rowspan];
 								var mergeCell = mergeRow[cell[0].cellIndex];
 								if (theCell.column == mergeCell.column && theCell.colspan == mergeCell.colspan) {
 									var newrowspan = theCell.rowspan + mergeCell.rowspan;
+									var savedTable = table.clone();
 									rows[rowIndex+theCell.rowspan].deleteCell(index);
 									cell.attr('rowspan', newrowspan);
+									var html = table[0].outerHTML;
+									table.html(savedTable.html());
+									replaceNodeWithHTML(trumbowyg, table, html);
 									trumbowyg.syncCode();
 								} else {
-                                    alert("Cannot merge cells across merges.");
-                                }
+									alert("Cannot merge cells across merges.");
+								}
 							} else {
 								alert("nothing to merge into")
 							}
 
 						}
 					});
-                    trumbowyg.addBtnDef('editTable', {
+					trumbowyg.addBtnDef('editTable', {
 						fn: function () {
 							trumbowyg.saveRange();
 							var range = trumbowyg.range,
@@ -453,8 +508,8 @@
 							});
 						}
 					});
-                }
-            }
-        }
-    });
+				}
+			}
+		}
+	});
 })(jQuery);
