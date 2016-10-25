@@ -264,7 +264,7 @@
                             var rowMap = cellMap[rowindex];
                             if (cell[0].cellIndex < rowMap.length - 1) {
                                 var theCell = rowMap[cell[0].cellIndex];
-                                var mergeCell = rowMap[cell[0].cellIndex + theCell.rowspan];
+                                var mergeCell = rowMap[cell[0].cellIndex + theCell.colspan];
                                 if (mergeCell.row != theCell.row || mergeCell.row == theCell.row && mergeCell.rowspan != theCell.rowspan) {
                                     alert("Cannot merge cells across merges.")
                                 } else {
