@@ -357,14 +357,14 @@
 								var mergeRow = cellMap[row[0].rowIndex + 1];
                                 var theCell = mapRow[cell[0].cellIndex];
 								var mergeCell = mergeRow[cell[0].cellIndex];
-								if (theCell.row == mergeCell.row && theCell.rowspan == mergeCell.rowspan) {
-									alert("Cannot merge cells across merges.")
-								} else {
+								if (theCell.column == mergeCell.column && theCell.colspan == mergeCell.colspan) {
 									var newrowspan = theCell.rowspan + mergeCell.rowspan;
 									rows[rowIndex+1].deleteCell(index);
 									cell.attr('rowspan', newrowspan);
 									trumbowyg.syncCode();
-								}
+								} else {
+                                    alert("Cannot merge cells across merges.");
+                                }
 							} else {
 								alert("nothing to merge into")
 							}
