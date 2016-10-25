@@ -268,9 +268,10 @@
                                 if (mergeCell.row != theCell.row || mergeCell.row == theCell.row && mergeCell.rowspan != theCell.rowspan) {
                                     alert("Cannot merge cells across merges.")
                                 } else {
+                                    var newcolspan = theCell.colspan + mergeCell.colspan;
                                     // can merge
                                     row[0].deleteCell(index + 1);
-                                    cell.attr('colspan', cell[0].colSpan + 1);
+                                    cell.attr('colspan', newcolspan);
                                     trumbowyg.syncCode();
                                 }
                             } else {
