@@ -354,13 +354,13 @@
 							var rowIndex = row[0].rowIndex;
 							var cellMap = getCellMap(table, rows);
 							var mapRow = cellMap[row[0].rowIndex];
-							if (row[0].rowIndex+1 < cellMap.length) {
+							if (row[0].rowIndex+cell[0].rowSpan-1 < cellMap.length) {
                                 var theCell = mapRow[cell[0].cellIndex];
 								var mergeRow = cellMap[row[0].rowIndex + theCell.rowspan];
 								var mergeCell = mergeRow[cell[0].cellIndex];
 								if (theCell.column == mergeCell.column && theCell.colspan == mergeCell.colspan) {
 									var newrowspan = theCell.rowspan + mergeCell.rowspan;
-									rows[rowIndex+1].deleteCell(index);
+									rows[rowIndex+theCell.rowspan].deleteCell(index);
 									cell.attr('rowspan', newrowspan);
 									trumbowyg.syncCode();
 								} else {
