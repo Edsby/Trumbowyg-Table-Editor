@@ -1,0 +1,26 @@
+{
+  "name": "Trumbowyg-Table-Editor",
+  "homepage": "https://github.com/Edsby/Trumbowyg-Table-Editor",
+  "authors": [
+    "Timon Orawski <timon@edsby.com>"
+  ],
+  "description": "Table Editor Plugin for Trumbowyg Wysiwyg editor",
+  "main": "src/tablemanager.js",
+  "keywords": [
+      "wysiwyg",
+      "javascript",
+      "richtext",
+      "tables"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "trumbowyg": ">=2.3.0"
+  }
+}
