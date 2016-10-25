@@ -264,7 +264,7 @@
                             var rowMap = cellMap[rowindex];
                             if (cell[0].cellIndex < rowMap.length - 1) {
                                 var theCell = rowMap[cell[0].cellIndex];
-                                var mergeCell = rowMap[cell[0].cellIndex + 1];
+                                var mergeCell = rowMap[cell[0].cellIndex + theCell.rowspan];
                                 if (mergeCell.row != theCell.row || mergeCell.row == theCell.row && mergeCell.rowspan != theCell.rowspan) {
                                     alert("Cannot merge cells across merges.")
                                 } else {
@@ -355,8 +355,8 @@
 							var cellMap = getCellMap(table, rows);
 							var mapRow = cellMap[row[0].rowIndex];
 							if (row[0].rowIndex+1 < cellMap.length) {
-								var mergeRow = cellMap[row[0].rowIndex + 1];
                                 var theCell = mapRow[cell[0].cellIndex];
+								var mergeRow = cellMap[row[0].rowIndex + theCell.rowspan];
 								var mergeCell = mergeRow[cell[0].cellIndex];
 								if (theCell.column == mergeCell.column && theCell.colspan == mergeCell.colspan) {
 									var newrowspan = theCell.rowspan + mergeCell.rowspan;
