@@ -10,11 +10,30 @@
 
 (function ($) {
 	'use strict';
-	var apply = function(def, node, key, value) {
-			if (def.e.type == "attr") {
-				node.attr(key, value);
-			} else if (def.e.type == "css") {
-				node.css(def.e.attr, value);
+	var apply = function(def, pNodes, key, value) {
+			var doApply = function(toNode) {
+					toNode = $(toNode);
+					if (def.e.type == "attr") {
+						toNode.attr(key, value);
+					} else if (def.e.type == "css") {
+						toNode.css(def.e.attr, value);
+					}
+				};
+			for (var i = 0; i < pNodes.length; i++) {
+				var node = $(pNodes[i]);
+				if (def.e.applyto) {
+					if (node.is(def.e.applyto)) {
+						doApply(node);
+
+					} else {
+						var applynodes = node.find(def.e.applyto);
+						for (var j = 0; j < applynodes.length; j++) {
+							doApply(applynodes[j]);
+						}
+					}
+				} else {
+					doApply(pNodes[i]);
+				}
 			}
 		},
 		fetchInitialValues = function(node, fields) {
@@ -90,8 +109,12 @@
 					for (var i in val) {
 						if (isChanged(val, i)) {
 							apply(conf.fields[i], conf.node, i, val[i]);
+							if (conf.relatedNodes) {
+								apply(conf.fields[i], conf.relatedNodes, i, val[i]);
+							}
 						}
 					}
+
 					var range = conf.trumbowyg.doc.createRange(),
 						documentSelection = conf.trumbowyg.doc.getSelection();
 					documentSelection.removeAllRanges();
@@ -110,6 +133,7 @@
 				editTable: 'Format Table',
 				formatCell: 'Format Cell',
 				formatRow: 'Format Row',
+				formatColumn: "Format Column",
 				insertLink: "Edit Link",
 				rows: 'Rows',
 				columns: 'Columns',
@@ -189,7 +213,7 @@
 										required: false,
 										e: {
 											"type": "css",
-											"attr": "border"
+											"attr": "padding"
 										}
 									},
 									"background-color": {
@@ -313,9 +337,62 @@
 										type: 'string',
 										required: false,
 										e: {
-											type: 'attr'
+											type: 'attr',
+											applyto: 'tr'
 										}
-									}/*,
+									},
+									width: {
+										type: 'string',
+										required: false,
+										e: {
+											type: "attr",
+											applyto: "td"
+										}
+									},
+									border: {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border",
+											applyto: "td"
+										}
+									},
+									padding: {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "padding",
+											applyto: "td"
+										}
+									},
+									"background-color": {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "background-color",
+											applyto: "td"
+										}
+									},
+									align: {
+										type: "string",
+										required: false,
+										e: {
+											type: "attr",
+											applyto: "td"
+										}
+									},
+									valign: {
+										type: "string",
+										required: false,
+										e: {
+											type: "attr",
+											applyto: "td"
+										}
+									}
+									/*,
 									cellborder: {
 										type: 'number',
 										required: false
@@ -335,6 +412,103 @@
 								title: trumbowyg.lang.formatRow,
 								fields: fields,
 								node: row,
+								replacenode: table
+							});
+						}
+					});
+					trumbowyg.addBtnDef('formatColumn', {
+						fn: function () {
+							trumbowyg.saveRange();
+							var range = trumbowyg.range,
+								fields = {
+									width: {
+										type: 'string',
+										required: false,
+										e: {
+											type: "attr",
+											applyto: "td"
+										}
+									},
+									border: {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border",
+											applyto: "td"
+										}
+									},
+									padding: {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "padding",
+											applyto: "td"
+										}
+									},
+									"background-color": {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "background-color",
+											applyto: "td"
+										}
+									},
+									align: {
+										type: "string",
+										required: false,
+										e: {
+											type: "attr",
+											applyto: "td"
+										}
+									},
+									valign: {
+										type: "string",
+										required: false,
+										e: {
+											type: "attr",
+											applyto: "td"
+										}
+									}
+									/*,
+									cellborder: {
+										type: 'number',
+										required: false
+									},
+									cellpadding: {
+										type: 'number',
+										required: false
+									}*/
+								},
+								startEl = $(trumbowyg.range.startContainer),
+								cell = startEl.closest('td'),
+								row = startEl.closest('tr'),
+								table = startEl.closest('table'),
+								rows = table.find('tr');
+							var cellMap = getCellMap(table, rows);
+							var applyNodes = [], colidx = -1;
+							for (var row in cellMap) {
+								for (var col in cellMap[row]) {
+									if (cellMap[row][col].cell === cell[0]) {
+										colidx = col;
+										break
+									}
+								}
+								if (colidx != -1) {
+									break;
+								}
+							}
+							for (var row in cellMap) {
+								applyNodes.push(cellMap[row][colidx].cell);
+							}
+							showDialog({
+								trumbowyg: trumbowyg,
+								title: trumbowyg.lang.formatColumn,
+								fields: fields,
+								node: cell,
+								relatedNodes: applyNodes,
 								replacenode: table
 							});
 						}
