@@ -19,20 +19,22 @@
 						toNode.css(def.e.attr, value);
 					}
 				};
-			for (var i = 0; i < pNodes.length; i++) {
-				var node = $(pNodes[i]);
-				if (def.e.applyto) {
-					if (node.is(def.e.applyto)) {
-						doApply(node);
+			if (def.e) {
+				for (var i = 0; i < pNodes.length; i++) {
+					var node = $(pNodes[i]);
+					if (def.e && def.e.applyto) {
+						if (node.is(def.e.applyto)) {
+							doApply(node);
 
-					} else {
-						var applynodes = node.find(def.e.applyto);
-						for (var j = 0; j < applynodes.length; j++) {
-							doApply(applynodes[j]);
+						} else {
+							var applynodes = node.find(def.e.applyto);
+							for (var j = 0; j < applynodes.length; j++) {
+								doApply(applynodes[j]);
+							}
 						}
+					} else if (def.e) {
+						doApply(pNodes[i]);
 					}
-				} else {
-					doApply(pNodes[i]);
 				}
 			}
 		},
@@ -112,6 +114,14 @@
 							if (conf.relatedNodes) {
 								apply(conf.fields[i], conf.relatedNodes, i, val[i]);
 							}
+							if (i == "caption" && conf.replacenode.is("table")) {
+								var caption = conf.replacenode.find('caption');
+								if (caption.length > 0) {
+									caption.html(val[i]);
+								} else {
+									conf.replacenode.prepend("<caption>" + val[i] + "</caption>");
+								}
+							}
 						}
 					}
 
@@ -174,7 +184,7 @@
 									if (v.rows > 100 || v.columns > 100 || v.rows <= 0 || v.columns <= 0) {
 										return false;
 									}
-									var table = ['<table width="500px" style="background-color: white;"></table>'];
+									var table = ['<table width="500px" style="background-color: white;">'];
 									for (var i = 0; i < v.rows; i += 1) {
 										table.push("<tr>");
 										for (var j = 0; j < v.columns; j += 1) {
@@ -182,6 +192,7 @@
 										}
 										table.push("</tr>");
 									}
+									table.push("</table>");
 									/* you must use insertHTML to preserve undo/redo */
 									trumbowyg.execCmd('insertHTML', table.join(""));
 									return true;
@@ -263,9 +274,30 @@
 								table = startEl.closest('table'),
 								rows = table.find('tr');
 							var index = cell[0].cellIndex;
+							var cellMap = getCellMap(table, rows);
+							var cellid = false, colidx = -1;;
+							for (var r in cellMap) {
+								for (var c in cellMap[r]) {
+									if (cellMap[r][c].cell === cell[0]) {
+										cellid = cellMap[r][c];
+										colidx = c;
+										break;
+									}
+								}
+								if (cellid) {
+									break;
+								}
+							}
 							var savedTable = table.clone();
-							for (var i = 0; i < table[0].rows.length; i++) {
-								table[0].rows[i].insertCell(index);
+							for (var r in cellMap) {
+								var rowCell = cellMap[r][colidx];
+								if (rowCell.truecolumn + rowCell.colspan - 1 > colidx) {
+									// increase colspan, used cellmap cached version because we may see this cell more than once (if rowspan > 1)
+									rowCell.cell.colSpan = rowCell.colspan + 1;
+								} else {
+									// insert cell
+									table[0].rows[r].insertCell(rowCell.column + 1);
+								}
 							}
 							var html = table[0].outerHTML;
 							table.html(savedTable.html());
@@ -283,6 +315,20 @@
 								table = startEl.closest('table'),
 								rows = table.find('tr');
 							var index = cell[0].cellIndex;
+							var cellMap = getCellMap(table, rows);
+							var cellid = false, colidx = -1;;
+							for (var r in cellMap) {
+								for (var c in cellMap[r]) {
+									if (cellMap[r][c].cell === cell[0]) {
+										cellid = cellMap[r][c];
+										colidx = c;
+										break;
+									}
+								}
+								if (cellid) {
+									break;
+								}
+							}
 							var savedTable = table.clone();
 
 							for (var i = 0; i < table[0].rows.length; i++) {
@@ -580,10 +626,22 @@
 							var cellMap = getCellMap(table, rows);
 							var mapRow = cellMap[row[0].rowIndex];
 							if (row[0].rowIndex+cell[0].rowSpan-1 < cellMap.length) {
-								var theCell = mapRow[cell[0].cellIndex];
+								var theCell = false, colidx = -1;
+								for (var r in cellMap) {
+									for (var c in cellMap[r]) {
+										if (cellMap[r][c].cell === cell[0]) {
+											colidx = c;
+											theCell = cellMap[r][c];
+											break
+										}
+									}
+									if (colidx != -1) {
+										break;
+									}
+								}
 								var mergeRow = cellMap[row[0].rowIndex + theCell.rowspan];
-								var mergeCell = mergeRow[cell[0].cellIndex];
-								if (theCell.column == mergeCell.column && theCell.colspan == mergeCell.colspan) {
+								var mergeCell = mergeRow[colidx];
+								if (theCell.truecolumn == mergeCell.truecolumn && theCell.colspan == mergeCell.colspan) {
 									var newrowspan = theCell.rowspan + mergeCell.rowspan;
 									var savedTable = table.clone();
 									rows[rowIndex+theCell.rowspan].deleteCell(index);
