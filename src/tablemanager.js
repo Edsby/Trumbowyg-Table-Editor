@@ -50,8 +50,8 @@
 			}
 		},
 		getCellMap = function(table, rows) {
-			var cellMap = [];
-			for (var i =0 ; i < rows.length; i++) {
+			var cellMap = [], i;
+			for (i =0 ; i < rows.length; i++) {
 				cellMap.push([]);
 			}
 			var tcell = false;
@@ -72,7 +72,7 @@
 					while (cellMap[r][cellidx]) {
 						cellidx = cellidx + 1;
 					}
-					for (var i = 0; i < tcell.colSpan; i++) {
+					for (i = 0; i < tcell.colSpan; i++) {
 						for (var j = 0; j < tcell.rowSpan; j++) {
 							cellMap[r+j][cellidx+i] = cellid;
 						}
@@ -275,8 +275,8 @@
 								rows = table.find('tr');
 							var index = cell[0].cellIndex;
 							var cellMap = getCellMap(table, rows);
-							var cellid = false, colidx = -1;;
-							for (var r in cellMap) {
+							var cellid = false, colidx = -1, r;
+							for (r in cellMap) {
 								for (var c in cellMap[r]) {
 									if (cellMap[r][c].cell === cell[0]) {
 										cellid = cellMap[r][c];
@@ -289,7 +289,7 @@
 								}
 							}
 							var savedTable = table.clone();
-							for (var r in cellMap) {
+							for (r in cellMap) {
 								var rowCell = cellMap[r][colidx];
 								if (rowCell.truecolumn + rowCell.colspan - 1 > colidx) {
 									// increase colspan, used cellmap cached version because we may see this cell more than once (if rowspan > 1)
@@ -316,7 +316,7 @@
 								rows = table.find('tr');
 							var index = cell[0].cellIndex;
 							var cellMap = getCellMap(table, rows);
-							var cellid = false, colidx = -1;;
+							var cellid = false, colidx = -1;
 							for (var r in cellMap) {
 								for (var c in cellMap[r]) {
 									if (cellMap[r][c].cell === cell[0]) {
@@ -357,7 +357,7 @@
 								var theCell = rowMap[cell[0].cellIndex];
 								var mergeCell = rowMap[cell[0].cellIndex + theCell.colspan];
 								if (mergeCell.row != theCell.row || mergeCell.row == theCell.row && mergeCell.rowspan != theCell.rowspan) {
-									alert("Cannot merge cells across merges.")
+									alert("Cannot merge cells across merges.");
 								} else {
 									var newcolspan = theCell.colspan + mergeCell.colspan;
 									var savedTable = table.clone();
@@ -534,20 +534,20 @@
 								table = startEl.closest('table'),
 								rows = table.find('tr');
 							var cellMap = getCellMap(table, rows);
-							var applyNodes = [], colidx = -1;
-							for (var row in cellMap) {
-								for (var col in cellMap[row]) {
-									if (cellMap[row][col].cell === cell[0]) {
+							var applyNodes = [], colidx = -1, r;
+							for (r in cellMap) {
+								for (var col in cellMap[r]) {
+									if (cellMap[r][col].cell === cell[0]) {
 										colidx = col;
-										break
+										break;
 									}
 								}
 								if (colidx != -1) {
 									break;
 								}
 							}
-							for (var row in cellMap) {
-								applyNodes.push(cellMap[row][colidx].cell);
+							for (r in cellMap) {
+								applyNodes.push(cellMap[r][colidx].cell);
 							}
 							showDialog({
 								trumbowyg: trumbowyg,
@@ -605,7 +605,7 @@
 								rows = table.find('tr');
 
 							var savedTable = table.clone();
-							table[0].deleteRow(row[0].rowIndex)
+							table[0].deleteRow(row[0].rowIndex);
 							var html = table[0].outerHTML;
 							table.html(savedTable.html());
 							replaceNodeWithHTML(trumbowyg, table, html);
@@ -632,7 +632,7 @@
 										if (cellMap[r][c].cell === cell[0]) {
 											colidx = c;
 											theCell = cellMap[r][c];
-											break
+											break;
 										}
 									}
 									if (colidx != -1) {
@@ -654,7 +654,7 @@
 									alert("Cannot merge cells across merges.");
 								}
 							} else {
-								alert("nothing to merge into")
+								alert("nothing to merge into");
 							}
 
 						}

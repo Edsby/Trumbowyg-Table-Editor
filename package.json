@@ -1,0 +1,44 @@
+{
+  "name": "trumbowyg-table-editor",
+  "version": "1.0.0",
+  "description": "Table Editor Plugin for Trumbowyg",
+  "main": "src/tablemanager.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Edsby/Trumbowyg-Table-Editor.git"
+  },
+  "author": {
+    "name": "Timon Orawski",
+    "email": "timon@edsby.com",
+    "url": "http://www.edsby.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Edsby/Trumbowyg-Table-Editor/issues"
+  },
+  "homepage": "https://github.com/Edsby/Trumbowyg-Table-Editor#readme",
+  "devDependencies": {
+    "del": "2.0.2",
+    "gulp": "3.9.0",
+    "gulp-autoprefixer": "2.2.0",
+    "gulp-concat": "2.6.0",
+    "gulp-header": "1.7.1",
+    "gulp-jshint": "1.11.2",
+    "gulp-livereload": "3.8.1",
+    "gulp-load-plugins": "1.0.0",
+    "gulp-newer": "1.0.0",
+    "gulp-rename": "1.2.2",
+    "gulp-size": "2.0.0",
+    "gulp-uglify": "1.4.2",
+    "jshint-stylish": "2.0.1",
+    "vinyl-paths": "2.0.0"
+  },
+  "scripts": {
+    "build": "npm install && gulp build",
+    "start": "gulp",
+    "test": "gulp test"
+  }
+}
