@@ -2,10 +2,14 @@
   "name": "trumbowyg-table-editor",
   "homepage": "https://github.com/Edsby/Trumbowyg-Table-Editor",
   "authors": [
-    "Timon Orawski <timon@edsby.com>"
+    {
+        "name": "Timon Orawski",
+        "email": "timon@edsby.com",
+        "homepage": "http://www.edsby.com"
+    }
   ],
   "description": "Table Editor Plugin for Trumbowyg Wysiwyg editor",
-  "main": "src/tablemanager.js",
+  "main": "dist/tablemanager.js",
   "keywords": [
       "wysiwyg",
       "javascript",
