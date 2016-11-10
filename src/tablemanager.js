@@ -10,6 +10,18 @@
 
 (function ($) {
 	'use strict';
+	var isIE11 = !!(navigator.userAgent.match(/Trident/) && navigator.userAgent.match(/rv[ :]11/));
+
+	var insertHTML = function(trumbowyg, html) {
+		if (isIE11) {
+			var range = trumbowyg.doc.createRange(),
+				documentSelection = trumbowyg.doc.getSelection();
+			trumbowyg.range.deleteContents();
+			trumbowyg.range.insertNode($(html)[0]);
+		} else {
+			trumbowyg.execCmd('insertHTML', html);
+		}
+	};
 	var apply = function(def, pNodes, key, value) {
 			var doApply = function(toNode) {
 					toNode = $(toNode);
@@ -87,7 +99,7 @@
 			documentSelection.removeAllRanges();
 			range.selectNode(replaceNode[0]);
 			documentSelection.addRange(range);
-			trumbowyg.execCmd('insertHTML', html);
+			insertHTML(trumbowyg, html);
 			// TODO: try to restore selection
 		},
 		showDialog = function(conf) {
@@ -131,7 +143,8 @@
 					range.selectNode(conf.replacenode[0]);
 					documentSelection.addRange(range);
 					conf.replacenode.replaceWith(tmpNode);
-					conf.trumbowyg.execCmd('insertHTML', conf.replacenode[0].outerHTML);
+					insertHTML(conf.trumbowyg, conf.replacenode[0].outerHTML);
+//					conf.trumbowyg.execCmd('insertHTML', conf.replacenode[0].outerHTML);
 					return true;
 				}
 			);
@@ -194,7 +207,8 @@
 									}
 									table.push("</table>");
 									/* you must use insertHTML to preserve undo/redo */
-									trumbowyg.execCmd('insertHTML', table.join(""));
+									insertHTML(trumbowyg, table.join(""));
+//									trumbowyg.execCmd('insertHTML', table.join(""));
 									return true;
 								});
 						}
