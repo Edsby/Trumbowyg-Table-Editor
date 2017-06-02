@@ -11,7 +11,6 @@
 (function ($) {
 	'use strict';
 	var isIE11 = !!(navigator.userAgent.match(/Trident/) && navigator.userAgent.match(/rv[ :]11/));
-
 	var insertHTML = function(trumbowyg, html) {
 		if (isIE11) {
 			var range = trumbowyg.doc.createRange(),
@@ -21,12 +20,17 @@
 		} else {
 			trumbowyg.execCmd('insertHTML', html);
 		}
+		trumbowyg.syncCode();
 	};
 	var apply = function(def, pNodes, key, value) {
 			var doApply = function(toNode) {
 					toNode = $(toNode);
 					if (def.e.type == "attr") {
-						toNode.attr(key, value);
+						if (value != "" && value != undefined) {
+							toNode.attr(key, value);
+						} else {
+							toNode.removeAttr(key);
+						}
 					} else if (def.e.type == "css") {
 						toNode.css(def.e.attr, value);
 					}
@@ -50,13 +54,15 @@
 				}
 			}
 		},
-		fetchInitialValues = function(node, fields) {
+		fetchInitialValues = function(node, fields, applyTo) {
 			for (var i in fields) {
 				if (fields[i].e) {
-					if (fields[i].e.type == "attr") {
-						fields[i].value = node.attr(i);
-					} else if (fields[i].e.type == "css") {
-						fields[i].value = node.css(i);
+					if (!applyTo || applyTo == fields[i].e.applyto) {
+						if (fields[i].e.type == "attr") {
+							fields[i].value = node.attr(i);
+						} else if (fields[i].e.type == "css") {
+							fields[i].value = node.css(fields[i].e.attr || i);
+						}
 					}
 				}
 			}
@@ -104,6 +110,9 @@
 		},
 		showDialog = function(conf) {
 			fetchInitialValues(conf.node, conf.fields);
+			if (conf.cell) {
+				fetchInitialValues(conf.cell, conf.fields, 'td')
+			}
 			for (var i in conf.fields) {
 				if (!conf.fields[i].label) {
 					conf.fields[i].label = i.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
@@ -140,9 +149,15 @@
 					var range = conf.trumbowyg.doc.createRange(),
 						documentSelection = conf.trumbowyg.doc.getSelection();
 					documentSelection.removeAllRanges();
-					range.selectNode(conf.replacenode[0]);
-					documentSelection.addRange(range);
 					conf.replacenode.replaceWith(tmpNode);
+					range.selectNode(tmpNode[0]);
+					documentSelection.addRange(range);
+					if (isIE11) {
+						documentSelection.removeAllRanges();
+						range.selectNode(tmpNode[0]);
+						documentSelection.addRange(range);
+						range.deleteContents();
+					}
 					insertHTML(conf.trumbowyg, conf.replacenode[0].outerHTML);
 //					conf.trumbowyg.execCmd('insertHTML', conf.replacenode[0].outerHTML);
 					return true;
@@ -185,11 +200,25 @@
 								{
 									rows: {
 										type: 'number',
-										required: true
+										required: true,
+										pattern: {
+											test: function(val) {
+												var p = parseInt(val);
+												return (val > 0 && val < 1000)
+											}
+										},
+										patternError: "Must be a positive integer"
 									},
 									columns: {
 										type: 'number',
-										required: true
+										required: true,
+										pattern: {
+											test: function(val) {
+												var p = parseInt(val);
+												return (val > 0 && val < 100)
+											}
+										},
+										patternError: "Must be a positive integer"
 									}
 								},
 								function (v) { // v is value
@@ -197,7 +226,7 @@
 									if (v.rows > 100 || v.columns > 100 || v.rows <= 0 || v.columns <= 0) {
 										return false;
 									}
-									var table = ['<table width="500px" style="background-color: white;">'];
+									var table = ['<table width="500px" style="background-color: white; border-color: grey; border-width: 1px; border-style: solid; ">'];
 									for (var i = 0; i < v.rows; i += 1) {
 										table.push("<tr>");
 										for (var j = 0; j < v.columns; j += 1) {
@@ -225,12 +254,43 @@
 											type: "attr"
 										}
 									},
-									border: {
+									"border-width": {
 										type: 'string',
 										required: false,
 										e: {
 											"type": "css",
-											"attr": "border"
+											"attr": "border-width"
+										}
+									},
+									"border-style": {
+										type: "select",
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-style"
+										},
+										disallowNone: true,
+										values: [
+											"none",
+											"hidden",
+											"dotted",
+											"dashed",
+											"solid",
+											"double",
+											"groove",
+											"ridge",
+											"inset",
+											"outset",
+											"initial",
+											"inherit"
+										]
+									},
+									"border-color": {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-color"
 										}
 									},
 									padding: {
@@ -250,18 +310,36 @@
 										}
 									},
 									align: {
-										type: "string",
+										type: "select",
 										required: false,
 										e: {
 											type: "attr"
-										}
+										},
+										values: [
+											"center",
+											"left",
+											"right"
+										]
 									},
-									valign: {
-										type: "string",
+									"vertical-align": {
+										type: "select",
 										required: false,
 										e: {
-											type: "attr"
-										}
+											type: "css",
+											attr: "vertical-align",
+										},
+										"values": [
+											"baseline",
+											"sub",
+											"super",
+											"top",
+											"text-top",
+											"middle",
+											"bottom",
+											"text-bottom",
+											"initial",
+											"inherit"
+										]
 									}
 								},
 								startEl = $(trumbowyg.range.startContainer),
@@ -409,13 +487,46 @@
 											applyto: "td"
 										}
 									},
-									border: {
+									"border-width": {
 										type: 'string',
 										required: false,
 										e: {
 											"type": "css",
-											"attr": "border",
-											applyto: "td"
+											"attr": "border-width",
+											"applyto": "td"
+										}
+									},
+									"border-style": {
+										type: "select",
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-style",
+											"applyto": "td"
+										},
+										disallowNone: true,
+										values: [
+											"none",
+											"hidden",
+											"dotted",
+											"dashed",
+											"solid",
+											"double",
+											"groove",
+											"ridge",
+											"inset",
+											"outset",
+											"initial",
+											"inherit"
+										]
+									},
+									"border-color": {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-color",
+											"applyto": "td"
 										}
 									},
 									padding: {
@@ -437,20 +548,37 @@
 										}
 									},
 									align: {
-										type: "string",
+										type: "select",
 										required: false,
 										e: {
 											type: "attr",
 											applyto: "td"
-										}
+										},
+										values: [
+											"center",
+											"left",
+											"right"
+										]
 									},
-									valign: {
-										type: "string",
+									"vertical-align": {
+										type: "select",
 										required: false,
 										e: {
-											type: "attr",
+											type: "css",
 											applyto: "td"
-										}
+										},
+										"values": [
+											"baseline",
+											"sub",
+											"super",
+											"top",
+											"text-top",
+											"middle",
+											"bottom",
+											"text-bottom",
+											"initial",
+											"inherit"
+										]
 									}
 									/*,
 									cellborder: {
@@ -472,7 +600,8 @@
 								title: trumbowyg.lang.formatRow,
 								fields: fields,
 								node: row,
-								replacenode: table
+								replacenode: table,
+								cell: cell
 							});
 						}
 					});
@@ -489,13 +618,46 @@
 											applyto: "td"
 										}
 									},
-									border: {
+									"border-width": {
 										type: 'string',
 										required: false,
 										e: {
 											"type": "css",
-											"attr": "border",
-											applyto: "td"
+											"attr": "border-width",
+											"applyto": "td"
+										}
+									},
+									"border-style": {
+										type: "select",
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-style",
+											"applyto": "td"
+										},
+										disallowNone: true,
+										values: [
+											"none",
+											"hidden",
+											"dotted",
+											"dashed",
+											"solid",
+											"double",
+											"groove",
+											"ridge",
+											"inset",
+											"outset",
+											"initial",
+											"inherit"
+										]
+									},
+									"border-color": {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-color",
+											"applyto": "td"
 										}
 									},
 									padding: {
@@ -517,20 +679,38 @@
 										}
 									},
 									align: {
-										type: "string",
+										type: "select",
 										required: false,
 										e: {
 											type: "attr",
 											applyto: "td"
-										}
+										},
+										values: [
+											"center",
+											"left",
+											"right"
+										]
 									},
-									valign: {
-										type: "string",
+									"vertical-align": {
+										type: "select",
 										required: false,
 										e: {
-											type: "attr",
+											type: "css",
+											attr: "vertical-align",
 											applyto: "td"
-										}
+										},
+										"values": [
+											"baseline",
+											"sub",
+											"super",
+											"top",
+											"text-top",
+											"middle",
+											"bottom",
+											"text-bottom",
+											"initial",
+											"inherit"
+										]
 									}
 									/*,
 									cellborder: {
@@ -712,12 +892,43 @@
 											type: "attr"
 										}
 									},
-									border: {
+									"border-width": {
 										type: 'string',
 										required: false,
 										e: {
 											"type": "css",
-											"attr": "border"
+											"attr": "border-width"
+										}
+									},
+									"border-style": {
+										type: "select",
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-style"
+										},
+										disallowNone: true,
+										values: [
+											"none",
+											"hidden",
+											"dotted",
+											"dashed",
+											"solid",
+											"double",
+											"groove",
+											"ridge",
+											"inset",
+											"outset",
+											"initial",
+											"inherit"
+										]
+									},
+									"border-color": {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "border-color"
 										}
 									},
 									padding: {
@@ -725,15 +936,28 @@
 										required: false,
 										e: {
 											"type": "css",
-											"attr": "border"
+											"attr": "padding"
+										}
+									},
+									margin: {
+										type: 'string',
+										required: false,
+										e: {
+											"type": "css",
+											"attr": "margin"
 										}
 									},
 									align: {
-										type: "string",
+										type: "select",
 										required: false,
 										e: {
 											type: "attr"
-										}
+										},
+										values: [
+											"center",
+											"left",
+											"right"
+										]
 									}
 								},
 								startEl = $(trumbowyg.range.startContainer),
